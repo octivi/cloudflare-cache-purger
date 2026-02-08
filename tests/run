@@ -203,11 +203,11 @@ test_help() {
 test_requires_token() {
   run_and_capture env CLOUDFLARE_ZONE_ID="zone-1" "${CLOUDFLARE_CACHE_PURGE}"
   assert_equal "${CAPTURED_STATUS}" "1"
-  assert_str_contains "${CAPTURED_OUTPUT}" "CLOUDFLARE_TOKEN is not set"
+  assert_str_contains "${CAPTURED_OUTPUT}" "CLOUDFLARE_API_TOKEN is not set"
 }
 
 test_requires_zone_id() {
-  run_and_capture env CLOUDFLARE_TOKEN="token-1" "${CLOUDFLARE_CACHE_PURGE}"
+  run_and_capture env CLOUDFLARE_API_TOKEN="token-1" "${CLOUDFLARE_CACHE_PURGE}"
   assert_equal "${CAPTURED_STATUS}" "1"
   assert_str_contains "${CAPTURED_OUTPUT}" "CLOUDFLARE_ZONE_ID is not set"
 }
@@ -221,7 +221,7 @@ test_purge_everything_payload() {
   : > "${tmp}/curl.log"
   PATH="${tmp}/bin:${ORIGINAL_PATH}" \
   MOCK_CURL_LOG="${tmp}/curl.log" \
-  CLOUDFLARE_TOKEN="token-1" \
+  CLOUDFLARE_API_TOKEN="token-1" \
   CLOUDFLARE_ZONE_ID="zone-1" \
   "${CLOUDFLARE_CACHE_PURGE}" >/dev/null
 
@@ -238,7 +238,7 @@ test_targeted_payload_from_env() {
   : > "${tmp}/curl.log"
   PATH="${tmp}/bin:${ORIGINAL_PATH}" \
   MOCK_CURL_LOG="${tmp}/curl.log" \
-  CLOUDFLARE_TOKEN="token-1" \
+  CLOUDFLARE_API_TOKEN="token-1" \
   CLOUDFLARE_ZONE_ID="zone-1" \
   FILES="https://example.com,https://example.com/app.js" \
   TAGS="release-1 release-2" \
@@ -260,7 +260,7 @@ test_cli_overrides_env_values() {
   : > "${tmp}/curl.log"
   PATH="${tmp}/bin:${ORIGINAL_PATH}" \
   MOCK_CURL_LOG="${tmp}/curl.log" \
-  CLOUDFLARE_TOKEN="token-1" \
+  CLOUDFLARE_API_TOKEN="token-1" \
   CLOUDFLARE_ZONE_ID="zone-1" \
   FILES="https://old.example.com" \
   "${CLOUDFLARE_CACHE_PURGE}" \
@@ -282,7 +282,7 @@ test_http_error() {
     MOCK_CURL_LOG="${tmp}/curl.log" \
     MOCK_CURL_STATUS="403" \
     MOCK_CURL_BODY='{"success":false,"errors":[{"message":"forbidden"}]}' \
-    CLOUDFLARE_TOKEN="token-1" \
+    CLOUDFLARE_API_TOKEN="token-1" \
     CLOUDFLARE_ZONE_ID="zone-1" \
     "${CLOUDFLARE_CACHE_PURGE}"
 
@@ -292,13 +292,13 @@ test_http_error() {
 }
 
 test_cli_unknown_option() {
-  run_and_capture env CLOUDFLARE_TOKEN="token-1" CLOUDFLARE_ZONE_ID="zone-1" "${CLOUDFLARE_CACHE_PURGE}" --nope
+  run_and_capture env CLOUDFLARE_API_TOKEN="token-1" CLOUDFLARE_ZONE_ID="zone-1" "${CLOUDFLARE_CACHE_PURGE}" --nope
   assert_equal "${CAPTURED_STATUS}" "1"
   assert_str_contains "${CAPTURED_OUTPUT}" "Unknown option: --nope"
 }
 
 test_cli_missing_value() {
-  run_and_capture env CLOUDFLARE_TOKEN="token-1" CLOUDFLARE_ZONE_ID="zone-1" "${CLOUDFLARE_CACHE_PURGE}" --files --tags t1
+  run_and_capture env CLOUDFLARE_API_TOKEN="token-1" CLOUDFLARE_ZONE_ID="zone-1" "${CLOUDFLARE_CACHE_PURGE}" --files --tags t1
   assert_equal "${CAPTURED_STATUS}" "1"
   assert_str_contains "${CAPTURED_OUTPUT}" "Missing value for --files"
 }

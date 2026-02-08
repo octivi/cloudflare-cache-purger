@@ -169,7 +169,7 @@ if (($# > 0)); then
   die "Unexpected arguments: $*"
 fi
 
-[[ -n "${CLOUDFLARE_TOKEN:-}" ]] || die "CLOUDFLARE_TOKEN is not set"
+[[ -n "${CLOUDFLARE_API_TOKEN:-}" ]] || die "CLOUDFLARE_API_TOKEN is not set"
 [[ -n "${CLOUDFLARE_ZONE_ID:-}" ]] || die "CLOUDFLARE_ZONE_ID is not set"
 
 type -P curl >/dev/null || die "curl package not installed"
@@ -213,7 +213,7 @@ http_status="$(curl \
   --disable \
   --url "${url}" \
   --request "${method}" \
-  --header "Authorization: Bearer ${CLOUDFLARE_TOKEN}" \
+  --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
   --header "Content-Type: application/json" \
   --data "${data}" \
   --dump-header "${tmp_hdr}" \

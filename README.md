@@ -16,7 +16,7 @@ It supports:
 
 | Input | Description | Required | Default |
 | --- | --- | --- | --- |
-| `CLOUDFLARE_TOKEN` | Cloudflare API token with cache purge permissions for the zone. | Yes | - |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with cache purge permissions for the zone. | Yes | - |
 | `CLOUDFLARE_ZONE_ID` | Cloudflare Zone ID. | Yes | - |
 | `files` | URLs to purge (space- or comma-separated). | No | `""` |
 | `tags` | Cache tags to purge (space- or comma-separated). | No | `""` |
@@ -66,7 +66,7 @@ jobs:
     steps:
       - uses: octivi/cloudflare-cache-purge@v1
         with:
-          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
 ```
 
@@ -75,7 +75,7 @@ Targeted purge:
 ```yml
 - uses: octivi/cloudflare-cache-purge@v1
   with:
-    CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
     files: "https://example.com/ https://example.com/app.js"
     tags: "release-2026-02"
@@ -88,7 +88,7 @@ Targeted purge:
 Run locally from this repository:
 
 ```bash
-CLOUDFLARE_TOKEN="..." \
+CLOUDFLARE_API_TOKEN="..." \
 CLOUDFLARE_ZONE_ID="..." \
 ./cloudflare-cache-purge \
   --files https://example.com/ https://example.com/app.js \

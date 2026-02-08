@@ -12,7 +12,7 @@ branding:
   icon: cloud-lightning
   color: orange
 inputs:
-  CLOUDFLARE_TOKEN:
+  CLOUDFLARE_API_TOKEN:
     description: "Cloudflare API token with cache purge permissions for the zone"
     required: true
   CLOUDFLARE_ZONE_ID:
@@ -40,7 +40,7 @@ runs:
     - name: Purge Cloudflare Cache
       shell: bash
       env:
-        CLOUDFLARE_TOKEN: ${{ inputs.CLOUDFLARE_TOKEN }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
         CLOUDFLARE_ZONE_ID: ${{ inputs.CLOUDFLARE_ZONE_ID }}
         FILES: ${{ inputs.files }}
         TAGS: ${{ inputs.tags }}
