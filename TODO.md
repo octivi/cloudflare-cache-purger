@@ -1,2 +1,0 @@
-# TODO
-- Brak otwartych TODO.
