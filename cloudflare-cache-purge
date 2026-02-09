@@ -7,7 +7,7 @@
 # Details at https://octivi.com/devops
 #
 # This script is part of a GitHub Action available on GitHub Marketplace:
-# https://github.com/marketplace/actions/cloudflare-cache-purge
+# https://github.com/marketplace/actions/purge-cloudflare-zone-cache
 #
 # Source code repository: https://github.com/octivi/cloudflare-cache-purge
 #
