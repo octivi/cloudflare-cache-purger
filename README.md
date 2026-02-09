@@ -150,6 +150,13 @@ Before using this action, read Cloudflare docs, especially limits and purge beha
 If you run into issues, open a GitHub issue in this repository and include a minimal reproduction
 (workflow snippet + inputs).
 
+## Other Octivi GitHub Actions
+
+If you are interested in other GitHub Actions we build, see:
+
+- [`octivi/update-copyright-year`](https://github.com/octivi/update-copyright-year) - Updates the copyright year in file headers across your repository
+- [`octivi/update-securitytxt-expires`](https://github.com/octivi/update-securitytxt-expires) - Updates the `Expires` field in `security.txt` files to a future date so published security contact metadata stays current
+
 ## Maintainers and contributors
 
 Maintained by the [Octivi DevOps team](https://octivi.com/devops). Contributions are welcome via
