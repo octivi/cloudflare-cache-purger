@@ -34,6 +34,14 @@ inputs:
     description: "URL prefixes to purge (space-, comma- or newline-separated)"
     required: false
     default: ""
+  dry_run:
+    description: "If true, print the request that would be sent and skip the API call"
+    required: false
+    default: "false"
+  verbose:
+    description: "If true, print detailed logs"
+    required: false
+    default: "false"
 runs:
   using: composite
   steps:
@@ -46,4 +54,6 @@ runs:
         TAGS: ${{ inputs.tags }}
         HOSTS: ${{ inputs.hosts }}
         PREFIXES: ${{ inputs.prefixes }}
+        DRY_RUN: ${{ inputs.dry_run == 'true' && '1' || '' }}
+        VERBOSE: ${{ inputs.verbose == 'true' && '1' || '' }}
       run: ${{ github.action_path }}/cloudflare-cache-purge

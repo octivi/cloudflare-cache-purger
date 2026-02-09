@@ -29,15 +29,25 @@ readonly __my_args
 IFS=$'\n\t'
 ################################################################################
 
+is_github_actions=false
+if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  is_github_actions=true
+fi
+
+DRY_RUN="${DRY_RUN-}"
+VERBOSE="${VERBOSE-}"
+
 usage() {
   cat <<USAGE
-Usage: ${__my_name} [--files files] [--tags tags] [--hosts hosts] [--prefixes prefixes] [--help|-h]
+Usage: ${__my_name} [--files files] [--tags tags] [--hosts hosts] [--prefixes prefixes] [--dry-run] [--verbose] [--help|-h]
 
 Options:
   --files files        Purge cached content by URL
   --tags tags          Purge cached content by tag
   --hosts hosts        Purge cached content by host
   --prefixes prefixes  Purge cached content by prefix
+  --dry-run            Show what would be sent without calling the API
+  --verbose            Print detailed progress logs
   -h, --help           Show this help message
 
 For list options, pass a single option-argument and separate items with spaces, commas,
@@ -45,13 +55,62 @@ or newlines, for example:
   --files "https://example.com/a.jpg https://example.com/b.css"
   --tags "release-2026-02 release-2026-03"
 
+Environment:
+  DRY_RUN=<any non-empty value>  Enable dry-run mode
+  VERBOSE=<any non-empty value>  Enable verbose logs
+
 Cloudflare's documentation on cache purging: https://developers.cloudflare.com/cache/how-to/purge-cache/
 Cloudflare's API documentation on cache purging: https://developers.cloudflare.com/api/resources/cache/methods/purge/
 USAGE
 }
 
+emit_group_start() {
+  local title="$1"
+  if [[ "${is_github_actions}" == true ]]; then
+    echo "::group::${title}"
+  elif [[ -n "${VERBOSE:-}" ]]; then
+    echo "== ${title} =="
+  fi
+}
+
+emit_group_end() {
+  if [[ "${is_github_actions}" == true ]]; then
+    echo "::endgroup::"
+  fi
+}
+
+emit_warning() {
+  local message="$1"
+  if [[ "${is_github_actions}" == true ]]; then
+    echo "::warning::${message}" >&2
+  else
+    echo "WARNING: ${message}" >&2
+  fi
+}
+
+append_step_summary() {
+  local line="$1"
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    printf '%s\n' "${line}" >> "${GITHUB_STEP_SUMMARY}" || true
+  fi
+}
+
+log_info() {
+  echo "$*"
+}
+
+log_verbose() {
+  if [[ -n "${VERBOSE:-}" ]]; then
+    echo "$*"
+  fi
+}
+
 die() {
-  echo "ERROR: $*" 1>&2
+  if [[ "${is_github_actions}" == true ]]; then
+    echo "::error::$*" >&2
+  else
+    echo "ERROR: $*" >&2
+  fi
   exit 1
 }
 
@@ -110,6 +169,12 @@ while (($#)); do
     -h|--help)
       usage
       exit 0
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      ;;
+    --verbose)
+      VERBOSE=1
       ;;
     --files|--tags|--hosts|--prefixes)
       option="$1"
@@ -177,11 +242,24 @@ if (($# > 0)); then
   die "Unexpected arguments: $*"
 fi
 
+dry_run_enabled=false
+verbose_enabled=false
+if [[ -n "${DRY_RUN:-}" ]]; then
+  dry_run_enabled=true
+fi
+if [[ -n "${VERBOSE:-}" ]]; then
+  verbose_enabled=true
+fi
+
 [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]] || die "CLOUDFLARE_API_TOKEN is not set"
 [[ -n "${CLOUDFLARE_ZONE_ID:-}" ]] || die "CLOUDFLARE_ZONE_ID is not set"
 
-type -P curl >/dev/null || die "curl package not installed"
 type -P jq >/dev/null || die "jq package not installed"
+if [[ "${dry_run_enabled}" == false ]]; then
+  type -P curl >/dev/null || die "curl package not installed"
+fi
+
+log_info "Mode: dry-run=${dry_run_enabled}, verbose=${verbose_enabled}"
 
 if ((${#FILES_LIST[@]} == 0 && ${#TAGS_LIST[@]} == 0 && ${#HOSTS_LIST[@]} == 0 && ${#PREFIXES_LIST[@]} == 0)); then
   data='{"purge_everything":true}'
@@ -209,6 +287,26 @@ fi
 command='purge_cache'
 method='POST'
 url="https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/${command}"
+
+emit_group_start "Request payload"
+if [[ "${verbose_enabled}" == true || "${dry_run_enabled}" == true ]]; then
+  printf '%s\n' "${data}" | jq .
+else
+  log_verbose "${data}"
+fi
+emit_group_end
+
+append_step_summary "### ${__my_name}"
+append_step_summary "- Mode: dry-run=${dry_run_enabled}, verbose=${verbose_enabled}"
+append_step_summary "- Zone ID: ${CLOUDFLARE_ZONE_ID}"
+append_step_summary "- Files: ${#FILES_LIST[@]}, tags: ${#TAGS_LIST[@]}, hosts: ${#HOSTS_LIST[@]}, prefixes: ${#PREFIXES_LIST[@]}"
+
+if [[ "${dry_run_enabled}" == true ]]; then
+  log_info "[DRY-RUN] Would call ${method} ${url}"
+  append_step_summary "- Result: dry-run only, no API call performed"
+  exit 0
+fi
+
 tmp_body="$(mktemp)"
 tmp_hdr="$(mktemp)"
 
@@ -233,6 +331,7 @@ http_status="$(curl \
 )"
 
 if ((http_status < 200 || http_status >= 300)); then
+  emit_group_start "Cloudflare API error"
   {
     echo "HTTP ${http_status} for ${method} ${url}"
     echo "---- response body ----"
@@ -240,9 +339,14 @@ if ((http_status < 200 || http_status >= 300)); then
     echo "---- response headers ----"
     cat "${tmp_hdr}"
   } >&2
-  exit 1
+  emit_group_end
+  append_step_summary "- Result: failed with HTTP ${http_status}"
+  die "Cloudflare purge failed (HTTP ${http_status})"
 fi
 
+emit_group_start "Cloudflare API response"
 echo "${method} ${command} for zone ${CLOUDFLARE_ZONE_ID}"
 jq < "${tmp_body}"
 echo
+emit_group_end
+append_step_summary "- Result: request sent successfully"

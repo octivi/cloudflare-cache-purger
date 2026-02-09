@@ -35,6 +35,8 @@ It supports:
 | `tags` | Cache tags to purge (space-, comma- or newline-separated). | No | `""` |
 | `hosts` | Hostnames to purge (space-, comma- or newline-separated). | No | `""` |
 | `prefixes` | URL prefixes to purge (space-, comma- or newline-separated). | No | `""` |
+| `dry_run` | If `true`, print planned request and skip API call. | No | `"false"` |
+| `verbose` | If `true`, print detailed logs. | No | `"false"` |
 
 If `files`, `tags`, `hosts` and `prefixes` are all empty, the action sends:
 `{"purge_everything": true}`.
@@ -110,8 +112,17 @@ CLOUDFLARE_ZONE_ID="..." \
   --prefixes example.com/static
 ```
 
-You can also set selectors via env vars: `FILES`, `TAGS`, `HOSTS`, `PREFIXES`.
-Values can be space-separated, comma-separated, newline-separated, or mixed.
+Optional execution modes:
+
+```bash
+./cloudflare-cache-purge --dry-run --verbose
+```
+
+You can also set values via env vars: `FILES`, `TAGS`, `HOSTS`, `PREFIXES`, `DRY_RUN`, `VERBOSE`.
+List values can be space-separated, comma-separated, newline-separated, or mixed.
+`DRY_RUN` and `VERBOSE` are presence flags: any non-empty value enables the mode, leaving the variable unset disables it.
+
+When run inside GitHub Actions, logs are grouped, warnings/errors are emitted as workflow annotations, and a short result is written to `GITHUB_STEP_SUMMARY`.
 
 ## Tests
 

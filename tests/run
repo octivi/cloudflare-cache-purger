@@ -189,6 +189,22 @@ SCRIPT
   chmod +x "${tmp}/bin/curl"
 }
 
+setup_fail_curl() {
+  local tmp="$1"
+  mkdir -p "${tmp}/bin"
+  cat <<'SCRIPT' > "${tmp}/bin/curl"
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -n "${MOCK_CURL_CALLED_FILE:-}" ]]; then
+  printf 'called\n' > "${MOCK_CURL_CALLED_FILE}"
+fi
+echo "curl should not be called in this test" >&2
+exit 99
+SCRIPT
+  chmod +x "${tmp}/bin/curl"
+}
+
 read_last_data_payload() {
   local log_file="$1"
   sed -n 's/^DATA=//p' "${log_file}" | tail -n1
@@ -291,6 +307,46 @@ test_cli_overrides_env_values() {
     '{"files":["https://new.example.com","https://new.example.com/app.js","https://new.example.com/app.css"],"tags":["tag1","tag2","tag3"]}'
 }
 
+test_dry_run_skips_api_call() {
+  local tmp
+  tmp="$(make_tmp)"
+  setup_fail_curl "${tmp}"
+
+  run_and_capture env \
+    PATH="${tmp}/bin:${ORIGINAL_PATH}" \
+    MOCK_CURL_CALLED_FILE="${tmp}/curl-called" \
+    CLOUDFLARE_API_TOKEN="token-1" \
+    CLOUDFLARE_ZONE_ID="zone-1" \
+    DRY_RUN=true \
+    "${CLOUDFLARE_CACHE_PURGE}" \
+    --files "https://example.com/file1.jpg"
+
+  assert_equal "${CAPTURED_STATUS}" "0"
+  assert_str_contains "${CAPTURED_OUTPUT}" "Mode: dry-run=true, verbose=false"
+  assert_str_contains "${CAPTURED_OUTPUT}" "[DRY-RUN] Would call POST"
+  if [[ -s "${tmp}/curl-called" ]]; then
+    fail "curl was called in dry-run mode"
+  fi
+}
+
+test_verbose_prints_payload() {
+  local tmp
+  tmp="$(make_tmp)"
+  setup_mock_curl "${tmp}"
+
+  run_and_capture env \
+    PATH="${tmp}/bin:${ORIGINAL_PATH}" \
+    MOCK_CURL_LOG="${tmp}/curl.log" \
+    CLOUDFLARE_API_TOKEN="token-1" \
+    CLOUDFLARE_ZONE_ID="zone-1" \
+    VERBOSE=true \
+    "${CLOUDFLARE_CACHE_PURGE}"
+
+  assert_equal "${CAPTURED_STATUS}" "0"
+  assert_str_contains "${CAPTURED_OUTPUT}" "Mode: dry-run=false, verbose=true"
+  assert_str_contains "${CAPTURED_OUTPUT}" "\"purge_everything\": true"
+}
+
 test_http_error() {
   local tmp
   tmp="$(make_tmp)"
@@ -308,6 +364,24 @@ test_http_error() {
   assert_equal "${CAPTURED_STATUS}" "1"
   assert_str_contains "${CAPTURED_OUTPUT}" "HTTP 403"
   assert_str_contains "${CAPTURED_OUTPUT}" "forbidden"
+}
+
+test_non_empty_verbose_env_enables_mode() {
+  local tmp
+  tmp="$(make_tmp)"
+  setup_mock_curl "${tmp}"
+
+  run_and_capture env \
+    PATH="${tmp}/bin:${ORIGINAL_PATH}" \
+    MOCK_CURL_LOG="${tmp}/curl.log" \
+    CLOUDFLARE_API_TOKEN="token-1" \
+    CLOUDFLARE_ZONE_ID="zone-1" \
+    VERBOSE=maybe \
+    "${CLOUDFLARE_CACHE_PURGE}"
+
+  assert_equal "${CAPTURED_STATUS}" "0"
+  assert_str_contains "${CAPTURED_OUTPUT}" "Mode: dry-run=false, verbose=true"
+  assert_str_contains "${CAPTURED_OUTPUT}" "\"purge_everything\": true"
 }
 
 test_cli_unknown_option() {
@@ -333,7 +407,10 @@ main() {
   run_test "targeted payload from env" test_targeted_payload_from_env
   run_test "targeted payload from multiline env" test_targeted_payload_from_multiline_env
   run_test "cli overrides env values" test_cli_overrides_env_values
+  run_test "dry-run skips api call" test_dry_run_skips_api_call
+  run_test "verbose prints payload" test_verbose_prints_payload
   run_test "http error handling" test_http_error
+  run_test "non-empty verbose env enables mode" test_non_empty_verbose_env_enables_mode
   run_test "cli unknown option" test_cli_unknown_option
   run_test "cli missing value" test_cli_missing_value
 
