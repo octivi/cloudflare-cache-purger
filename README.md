@@ -1,10 +1,10 @@
 # Cloudflare Cache Purge GitHub Action
 
-[![Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-blue?logo=github)](https://github.com/marketplace/actions/purge-cloudflare-zone-cache)
-[![GitHub release](https://img.shields.io/github/v/release/octivi/cloudflare-cache-purge?sort=semver)](https://github.com/octivi/cloudflare-cache-purge/releases)
-[![license](https://img.shields.io/github/license/octivi/cloudflare-cache-purge)](https://choosealicense.com/licenses/mit/)
+[![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-blue?logo=github)](https://github.com/marketplace/actions/purge-cloudflare-zone-cache)
+[![GitHub Releases](https://img.shields.io/github/v/release/octivi/cloudflare-cache-purge?sort=semver)](https://github.com/octivi/cloudflare-cache-purge/releases)
+[![License: MIT](https://img.shields.io/github/license/octivi/update-copyright-year)](https://choosealicense.com/licenses/mit/)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org/)
-[![semver](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/spec/v2.0.0.html)
+[![Semantic Versioning](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/spec/v2.0.0.html)
 
 This GitHub Action purges Cloudflare cache via Cloudflare API.
 It supports:
