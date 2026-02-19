@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-02-19
+
+### Added
+
+- Add automated GitHub release workflow to publish tagged releases consistently ([`23ae46a`](https://github.com/octivi/cloudflare-cache-purge/commit/23ae46a)) (Marcin Engelmann)
+
 ## [1.1.0] - 2026-02-09
 
 ### Added
@@ -17,5 +23,6 @@
 
 - Add the initial GitHub Action for purging Cloudflare cache ([`1a4eee8`](https://github.com/octivi/cloudflare-cache-purge/commit/1a4eee8)) (Marcin Engelmann)
 
+[1.2.0]: https://github.com/octivi/cloudflare-cache-purge/releases/tag/v1.2.0
 [1.1.0]: https://github.com/octivi/cloudflare-cache-purge/releases/tag/v1.1.0
 [1.0.0]: https://github.com/octivi/cloudflare-cache-purge/releases/tag/v1.0.0
